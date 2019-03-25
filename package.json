@@ -1,0 +1,20 @@
+{
+  "name": "card-game",
+  "version": "1.0.0",
+  "description": "Game server for Hearthstone card game",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "server",
+    "game",
+    "card-game"
+  ],
+  "author": "toanlove371@gmail.com",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.16.4",
+    "socket.io": "^2.2.0"
+  }
+}
