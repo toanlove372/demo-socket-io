@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+    <header>
+        <title>Card game mockup</title>
+        <style>
+        .highlight {
+            background-color: blueviolet;
+        }
+        </style>
+    </header>
+
+    <body>
+        <script src="/socket.io/socket.io.js"></script>
+        <h1>Card game mockup</h1>
+
+        User name <input type="text" id="username-input" value="Web mockup"> <button onclick="login()">Connect</button>
+        <br>
+        
+        <ol id="room-list">
+            
+        </ol>
+        
+        Event name <input type="text" id="event-name-input" value="turnMove"> 
+        Parameters <input type="text" id="parameter-input" value="{moveType:0,fromIndex:0,toIndex:0}"> 
+        <button onclick="excuteCommand()">Excute</button>
+
+        <br>
+        <div id="console-log">
+
+        </div>
+
+        <script>
+        var socket = io();
+        var userName = document.getElementById('username-input');
+        var roomOl = document.getElementById('room-list');
+        var selfName;
+        var eventNameInput = document.getElementById('event-name-input');
+        var parameterInput = document.getElementById('parameter-input');
+        var log = document.getElementById('console-log');
+
+        socket.on('loginDone', (data) =>{
+            selfName = data.name;
+            userName.value = data.name;
+            userName.disabled = true;
+
+            let playerList = data.playerList;
+
+            for (var key in playerList) {
+                if (playerList.hasOwnProperty(key)) {
+                    console.log('key: ' + key);
+                    createPlayer(playerList[key]);
+                }
+            }
+        });
+
+        socket.on('playerJoin', (data)=> {
+            createPlayer(data);
+        });
+
+        socket.on('playerDisconnect', data=> {
+            console.log('wtf');
+            let li = document.getElementById('LI' + data);
+            console.log('disconnect' + li.innerHTML);
+            li.innerHTML = 'Removed(' + data + ')';
+        });
+
+        socket.on('inviteReceived', data=> {
+            let inviterName = data;
+            console.log('Invite received: ' + inviterName);
+            let li = document.getElementById('LI' + selfName);
+            li.innerHTML = selfName + 
+                ' <span class="highlight">' +
+                    inviterName + 
+                    '</span> <button onclick="onInviteClicked(\'' + 
+                    selfName + '\')">Invite</button>';
+            li.id = 'LI' + selfName;
+        });
+
+        socket.on('matchFound', (data)=> {
+            console.log('matchFound: ' + data);
+        });
+
+        socket.on('opponentMove', data=> {
+            console.log('Opponent move:');
+            console.log(data);
+            log.innerText += '\n' + data.moveType + ', ' + data.fromIndex + ', ' + data.toIndex;
+        });
+
+        function login(){
+            let data = {
+                userName: userName.value
+            };
+
+            socket.emit('login', data);
+        }
+
+        function createPlayer(player){
+            console.log(player.name);
+            
+            let node = document.createElement("LI"); 
+            node.innerHTML = player.name + 
+                ' <span class="highlight">' +
+                    player.opponentName + 
+                    '</span> <button onclick="onInviteClicked(\'' + 
+                    player.name + '\')">Invite</button>';
+            node.id = 'LI' + player.name;
+            roomOl.appendChild(node);
+        }
+
+        function onInviteClicked(name){
+            if (selfName == name){
+                return;
+            }
+
+            console.log('Invite: ' + name);
+            socket.emit('invitePlayer', {
+                invitedName: name
+            });
+        }
+
+        function excuteCommand(){
+            let eventName = eventNameInput.value;
+            let parameter = parameterInput.value;
+
+            socket.emit(eventName, parameter);
+        }
+        </script>
+    </body>
+</html>
